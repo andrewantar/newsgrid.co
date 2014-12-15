@@ -1,0 +1,613 @@
+<html>
+  <head>
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+    <script src="/path/to/masonry.pkgd.min.js"></script>
+    <script type="text/javascript">var addthis_config = {"data_track_addressbar":true};</script>
+    <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-511e3f9a5244646e"></script>
+  <!--  <script src="js/simple-slider.js"></script>
+      <link href="css/simple-slider-volume.css" rel="stylesheet" type="text/css" />
+ !-->
+ 
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,400,900|Quicksand|Hammersmith+One|Montserrat|Roboto+Condensed|Oswald|Roboto:400,900|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel='shortcut icon' href='iosicon.png' type='image/x-icon'/ > 
+    <link rel="apple-touch-icon" href="iosicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script type="text/javascript">
+
+//var a = "http://www.google.com/bla/bla/bla"; a.split("/")[2];
+//"www.google.com"
+//b = a.split("/")[2]
+//fav = b + "/favicon.ico"
+
+$(function() {  
+
+  $("form").on("change", function(){
+    // Get the form that was changed
+    var form = $(this);
+
+    // Get text boxes in form
+    var items = form.find("input[type=text]");
+
+    // Clear urls
+    urls = [];
+
+    // Iterate through the text boxes
+    items.each(function(){
+      // Get input value
+      var value = this.value;
+
+      // Only if not blank...
+      if (value) {
+        // Push value of this text box to array
+        urls.push($(this).val());
+      }
+    });
+
+    console.log(urls);
+
+  });
+
+
+  //$("[data-slider]")
+   // .each(function () {
+    //  var input = $(this);
+    //  $("<span>")
+     //   .addClass("output")
+       // .insertAfter($(this));
+   // })
+  //  .bind("slider:ready slider:changed", function (event, data) {
+   //   $(this)
+    //    .nextAll(".output:first")
+    //      .html(data.value.toFixed(3));
+   // });
+
+  $(".x").click(function() { 
+    console.log("click");
+  });
+
+  $("#addFeed").click(function(){
+      console.log("click");
+        var list = $("#urls");
+        var li = $("<li>");
+        var input = $("<input>");
+        input.attr('type', 'text');
+        //var x = document.createElement("div");
+        //x.innerHTML = "x";
+        //x.className = ('x');
+        li.append(input);
+        //li.append(x);
+        list.append(li);
+  });
+
+  $("#getNews").on("click", function(){
+    localStorage["newsgrid:urls"] = JSON.stringify(urls);
+   $('#feed').empty();
+   createFeed();
+  });
+
+
+  $(".logo").click(function() { 
+
+    $(".nav").toggleClass("nav-change");
+
+  });  
+});  
+    
+
+
+    var urls;
+    if (localStorage["newsgrid:urls"]) {
+      urls = JSON.parse(localStorage["newsgrid:urls"]);
+    } else {
+      urls = ["http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+              "http://feeds.huffingtonpost.com/huffingtonpost/raw_feed",
+              "http://online.wsj.com/xml/rss/3_7455.xml",
+              "http://www.engadget.com/rss.xml",
+              "https://news.ycombinator.com/rss",
+              "http://pitchfork.com/rss/reviews/best/albums/",
+              "http://rss.cnn.com/rss/cnn_topstories.rss",
+              "http://hosted2.ap.org/atom/APDEFAULT/3d281c11a96b4ad082fe88aa0db04305"
+               ];
+    }
+
+    function initialize () {
+      makeList();
+
+    }
+
+    function makeList () {
+
+
+      for (var i = 0; i<urls.length; i++){
+
+        var list = $("#urls");
+        var li = $("<li>");        
+        var input = $("<input>").val(urls[i]);
+        input.attr('type', 'text');
+        //var x = document.createElement("div");
+        //x.innerHTML = "x";
+        //x.className = ('x');
+        li.append(input);
+        //li.append(x);
+        list.append(li);
+      }
+    }
+
+    google.load("feeds", "1");
+
+    var amount = 50;
+
+//  var sliderAmountArray = document.getElementsByClassName("output");
+
+// var sliderA = $('output');
+
+
+//   var increment = 50;
+//  var count = 1;
+  //  amount = count*increment;
+
+   // var startAmount;
+   // startAmount = (amount*urls.length)-(increment*urls.length);
+
+   // var makingBoxes = false;
+   // var win = $(window);
+
+// pull in start amount from each source. Compare last item in each source array and take the largest item. Put arrays together and split at youngest last item. Pull new items and skip the amount that the previous array took. 
+
+    function createFeed() {
+  
+      for (var i = 0; i<urls.length; i++){
+
+        var feed = new google.feeds.Feed(urls[i]);
+
+        feed.setNumEntries(amount);
+        feed.includeHistoricalEntries();
+        feed.load(feedLoaded);
+      }
+
+        var loading = document.getElementById('spinner');    
+        $("#spinner").remove();
+
+
+    }
+    
+    var timesLoaded = 0;
+    var finalArray = [];
+
+function feedLoaded(result) {
+
+    timesLoaded++;
+
+  if (!result.error) {
+
+  finalArray = finalArray.concat(result.feed.entries);
+
+
+      if (timesLoaded == urls.length){
+
+        finalArray.sort(function(x,y) {
+        var a = new Date(x.publishedDate);
+        var b = new Date(y.publishedDate);
+
+       if (a>b) {return -1;}
+        else if (a<b) {return 1;}
+        return 0;
+
+        });
+        timesLoaded = 0;
+        createStory();
+
+      }
+  }
+}
+
+function createStory() {
+
+       
+          var container = document.getElementById("feed");
+          for (var i = 0; i < finalArray.length; i++) {
+            var entry = finalArray[i];
+
+
+            var articleDiv = document.createElement("div");
+            articleDiv.className = "article";
+
+
+            var titleDiv = document.createElement("div");
+            titleDiv.className = "title";
+            var anchor = document.createElement("a");
+            anchor.setAttribute('href', entry.link);
+            anchor.setAttribute('target', "_blank");
+            anchor.innerHTML = entry.title;
+            titleDiv.appendChild(anchor);
+            articleDiv.appendChild(titleDiv);
+
+            if (entry.mediaGroups) {
+                var imageDiv = document.createElement("img")
+                var image = entry.mediaGroups[0].contents[0].url;
+                imageDiv.setAttribute('src', image);
+                imageDiv.className = "image";
+                articleDiv.appendChild(imageDiv);
+            }
+
+            var snipDiv = document.createElement("div");
+            snipDiv.className = "snippet";
+            snipDiv.appendChild(document.createTextNode(entry.contentSnippet));
+            articleDiv.appendChild(snipDiv);
+
+            var faviconDiv = document.createElement("img");
+            var url = entry.link.split("/")[2];
+            var url1 = url.replace('rss.','');
+            var url2 = url1.replace('feeds.','');
+            var fav = "http://" + url2 + "/favicon.ico";
+            faviconDiv.setAttribute('src', fav+"");
+            faviconDiv.className = "favicon";
+            articleDiv.appendChild(faviconDiv);
+
+            var authorDiv = document.createElement("div");
+            authorDiv.appendChild(document.createTextNode(entry.author));
+            authorDiv.className = "author";
+            articleDiv.appendChild(authorDiv);
+
+            var dateDiv = document.createElement("div");
+            dateDiv.appendChild(document.createTextNode(entry.publishedDate));
+            dateDiv.className = "date";
+            articleDiv.appendChild(dateDiv);
+
+            $("img").error(function () { 
+            $(this).hide();
+            // or $(this).css({visibility:"hidden"}); 
+            });
+
+
+           // var contentDiv = document.createElement("div");
+           // contentDiv.innerHTML = entry.content;
+           // contentDiv.className = "content";
+           // container.appendChild(contentDiv);
+
+            container.appendChild(articleDiv);
+
+          }
+      };
+
+    google.setOnLoadCallback(createFeed);
+
+
+//win.scroll(function() {
+   //   var st = win.scrollTop();
+   //   var h = win.height();
+   //   var scrollPerc = st/h;
+     // var threshold = .8;
+
+  //    if(urls.length < 8 && count < 4) {
+    //    threshold = .5;
+  //    }
+
+      //if(scrollPerc > threshold && !makingBoxes) {
+       //makingBoxes = true;
+
+        //var container = document.getElementById("feed");
+        //var loading = document.createElement("img");
+            //loading.setAttribute('src', "loading.gif");
+          //  loading.setAttribute("id", "loader")
+            //container.appendChild(loading);
+//       count++;
+       //createStory();
+    //  }
+ // });
+
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43948469-1', 'newsgrid.co');
+  ga('send', 'pageview');
+
+
+
+
+    </script>
+
+
+
+
+    <style type="text/css">
+
+      #holder {
+        position: absolute;
+        background-image: url(day.png);
+        width: 2000px;
+        height: 100%;
+        background-size: 100%;
+        background-repeat: no-repeat;
+        position: fixed;;
+        overflow: scroll;
+        -webkit-filter: blur(2px);
+        -moz-filter: blur(2px);
+        -o-filter: blur(2px);
+        -ms-filter: blur(2px);
+        filter: blur(2px);
+        margin-left: -5px;
+      }
+
+      .logo {
+        height: 25px;
+        width: 25px;
+        position: fixed;
+        z-index: 100000000;
+        background: url(hamburger.png);
+        background-size: 25px;
+        margin-left: 3px;
+        margin-top: 3px;
+      }
+
+      #spinner {
+      width: 25px;
+      height: 25px;
+      margin: 0 auto;
+      border-left: 2px solid rgba(255,255,255,0.8);
+      border-radius: 100%;
+      position: absolute;
+      margin-top: 26%;
+      left: 48%;
+
+      -webkit-animation:spin 1s linear infinite;
+      -moz-animation:spin 1s linear infinite;
+      animation:spin 1s linear infinite;
+      }
+
+      @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+      @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+      @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } 
+      }
+
+      input {
+          background: none;
+          border: none;
+          border-bottom: 1px solid #ffffff; 
+          padding: 6px;
+          margin-left:50px;
+          margin-bottom: 4px;
+          width: 230px;
+          color: #ffffff;
+          font-weight: 100;
+        font-family: 'Lato', sans-serif;
+      }
+
+      .x {
+        color: #ffffff;
+        margin-left: 300px;
+        position: absolute;
+        margin-top: -30px;
+        font-weight: 100;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .nav {
+        margin-left: -340px;
+        height: 100%;
+        width: 330px;
+        float: left;
+        z-index: 100000;
+        position: fixed;
+        background: rgba(25,25,25,0.9);
+        box-shadow: 0 0 5px black;
+        padding-bottom: 10px;
+        margin-top: -10px;
+        -webkit-transition: margin 1s ease; 
+          transition: margin 1s ease; 
+            -o-transition: margin 1s ease; 
+              -moz-transition: margin 1s ease; 
+        overflow:scroll;
+        font-family: 'Lato', sans-serif;
+      }
+
+      #description {
+            color: white;
+            font-weight: 100;
+            font-size: 14px;
+            margin-left: 50px;
+            margin-right: 50px;
+      }
+
+      #urls {
+          list-style-type: none;
+          padding: 0;
+      }
+
+      .nav-change {
+      margin-left: -10px;
+      }
+
+
+      #newsgrid {
+        margin-left: 50px;
+        margin-top: 12px;
+        height: 40px;
+        width: 200px;
+        color: white;
+        font-size: 22px;
+        font-family: 'Montserrat', sans-serif;
+      }
+
+      #feed {
+        margin-left: 20px;
+      }
+
+      .title {
+            font-size: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+      }
+
+      .author {
+            font-weight: 700;
+            font-size: 14px;
+      }
+
+      .date {
+            font-size: 12px;
+      }
+
+      .snippet {
+            font-size: 16px;
+            font-weight: 100;
+            opacity: .9;
+      }
+
+      .favicon {
+            height: 30px;
+            width: 30px;
+            float: left;
+            position: inline-block;
+            margin: 5px;
+      }
+
+      .image {
+            width: 130px;
+            float: right;
+            margin: 5px;
+            box-shadow: 0 0 5px gray;
+            border-radius: 5px;
+      }
+
+      .date, .title, .author, .snippet {
+            margin: 5px;
+      }
+
+      body {
+          margin: 0;
+          padding: 0;
+          background-color: #ffffff;
+      }
+
+      a {
+          color: #FFFFFF;
+          text-decoration: none;
+      }
+
+      a:hover 
+      {
+        opacity: .8;
+        cursor:pointer;  
+      }
+
+      .article {
+        margin: 10px;
+        padding: 10px;
+        font-family: 'Lato', sans-serif;
+        font-weight: 200;
+        display: inline-block;
+        position: relative;
+        max-width: 30%;
+        background-color: white;
+        background: rgba(155,155,155,0.3);
+        color: #ffffff;
+        text-shadow: 0 0 2px #000000;
+        box-shadow: 0 0 3px #333333;
+        vertical-align: top;
+      }
+
+      #share {
+        padding: 5px;
+      }
+
+      @media (max-width: 1315px) {
+        .article {
+          max-width: 29%;
+        }
+        #holder{
+        }
+      }
+
+      @media (max-width: 1105px) {
+        .article {
+          max-width: 45%;
+        }
+      }
+
+      @media (max-width: 895px) {
+
+      .article {
+        max-width: 43%;
+      }
+
+
+      @media (max-width: 655px) {
+        .article {
+          max-width: 100%;
+        }
+      }
+
+      .image {
+        width: 100px;
+      }
+
+      #getNews:hover {
+        color: white;
+
+      }
+
+      @media only screen and (max-device-width: 480px) {
+        .article {
+          max-width: 100%;
+        }
+        body {
+          zoom; 200%;
+        }
+        .image {
+          width: 75px;
+        }
+      }
+  
+    </style>
+
+    <script type="text/javascript">
+
+        $( document ).ready(function() {
+         initialize();
+        });
+
+     
+    </script>
+
+  </head>
+    <body>
+      <a class="logo"></a>
+      <div id="holder"></div>
+        <div class="nav">
+          <div id="newsgrid">newsgrid.co</div>
+          <div id="description">
+              <em><b>newsgrid.co</b></em> is a simple RSS reader that turns your favorite news feeds into a beautiful newspaper.<br><br>Find RSS URLs on the web from sources you follow and add them to the fields below and reload to get new feeds. Your URLs will automatically save in local storage for later!
+              <br><br>
+              <b> Share Newsgrid!</b>
+
+              <div id="share" class="addthis_toolbox addthis_default_style">
+                  <a class="addthis_button_preferred_1"></a>
+                  <a class="addthis_button_preferred_2"></a>
+                  <a class="addthis_button_preferred_3"></a>
+                  <a class="addthis_button_preferred_4"></a>
+                  <a class="addthis_button_compact"></a>
+                  <a class="addthis_counter addthis_bubble_style"></a>
+              </div>
+          </div>
+          <form>
+             <ul id="urls">
+             </ul>
+          </form>
+          <input id="addFeed" type="button" style="color:white;" value="Add New RSS Feed"></input>
+          <input id="getNews" type="button" style="color:white;" value="Load News"></input>
+        </div>
+
+        <div id="feed">
+          <div id="spinner"></div>
+        </div>
+
+  </body>
+</html>
